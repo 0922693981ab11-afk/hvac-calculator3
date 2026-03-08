@@ -95,7 +95,7 @@
                 <div class="glass-card p-7 space-y-8 border-t-4 border-emerald-600">
                     <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-                        實驗參數與系統配置 <span class="thesis-ref">§ 3.4 RSM</span>
+                        製程參數與系統配置 <span class="thesis-ref">§ 3.4 RSM</span>
                     </h3>
                     
                     <div class="space-y-6">
@@ -104,12 +104,12 @@
                             <input type="range" id="inputA" min="1" max="10" step="0.1" value="3" class="w-full">
                         </div>
                         <div>
-                            <div class="flex justify-between text-xs font-bold mb-3"><span>液氣比 (L/G)</span><span class="text-emerald-600 font-mono"><span id="valB">10</span></span></div>
+                            <div class="flex justify-between text-xs font-bold mb-3"><span>液氣比 (L/G)</span><span class="text-emerald-600 font-mono"><span id="valB">10</span> L/m³</span></div>
                             <input type="range" id="inputB" min="5" max="20" step="1" value="10" class="w-full">
                         </div>
                         <div>
-                            <div class="flex justify-between text-xs font-bold mb-3"><span>煙道進氣溫度 (°C)</span><span class="text-emerald-600 font-mono"><span id="valTemp">115</span>°C</span></div>
-                            <input type="range" id="inputTemp" min="60" max="150" value="115" class="w-full">
+                            <div class="flex justify-between text-xs font-bold mb-3"><span>系統水力負荷 (HLR)</span><span class="text-emerald-600 font-mono"><span id="valHLR">1000</span> L/m²/d</span></div>
+                            <input type="range" id="inputHLR" min="100" max="5000" step="100" value="1000" class="w-full">
                         </div>
                     </div>
 
@@ -122,12 +122,22 @@
                                 <option value="voc">VOCs 揮發性有機物降解</option>
                             </select>
                         </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">超音波霧化頻率 <span class="thesis-ref">§ 2.3</span></label>
-                            <select id="fogFreq" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none">
-                                <option value="1.7">1.7 MHz (標準傳質效應)</option>
-                                <option value="2.4">2.4 MHz (奈米級微細霧化強化)</option>
-                            </select>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">霧化頻率 <span class="thesis-ref ml-0">§ 2.3</span></label>
+                                <select id="fogFreq" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                                    <option value="1.7">1.7 MHz (標準)</option>
+                                    <option value="2.4">2.4 MHz (微細化)</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">MSL 濾材選型</label>
+                                <select id="mslType" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                                    <option value="standard">標準 SML 土塊層</option>
+                                    <option value="carbon">廢活性碳 (高孔隙)</option>
+                                    <option value="clay">發泡煉石 (低壓降)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -180,7 +190,7 @@
                     
                     <div class="w-full grid grid-cols-2 gap-4">
                         <div class="metric-card shadow-sm border-slate-100">
-                            <p class="text-[10px] font-black text-slate-400 uppercase mb-2">毛捕捉量 (Gross Capture)</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase mb-2">年度毛捕捉量 (Gross)</p>
                             <p class="text-xl font-bold text-slate-800 font-mono"><span id="resTons">0</span> <span class="text-[10px] font-medium text-slate-400">噸/年</span></p>
                         </div>
                         <div class="metric-card shadow-sm border-emerald-200 bg-emerald-50/30">
@@ -190,12 +200,12 @@
                             <p class="text-xl font-bold text-emerald-700 font-mono"><span id="resNetCarbon">0</span> <span class="text-[10px] font-medium text-emerald-600">噸 CO₂e</span></p>
                         </div>
                         <div class="metric-card shadow-sm border-slate-100">
-                            <p class="text-[10px] font-black text-slate-400 uppercase mb-2">碳費節省 (Carbon Value)</p>
-                            <p class="text-xl font-bold text-blue-600 font-mono">NT$ <span id="resSavings">0</span></p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase mb-2">預估壓降與能耗懲罰</p>
+                            <p class="text-xl font-bold text-orange-500 font-mono"><span id="resPressure">--</span> <span class="text-[10px] font-medium text-slate-400">mmAq</span></p>
                         </div>
                         <div class="metric-card shadow-sm border-slate-100">
-                            <p class="text-[10px] font-black text-slate-400 uppercase mb-2">環境微生物減活率</p>
-                            <p id="resBio" class="text-xl font-bold text-orange-500 font-mono">--%</p>
+                            <p class="text-[10px] font-black text-slate-400 uppercase mb-2">藥劑飽和替換週期預警</p>
+                            <p class="text-xl font-bold text-blue-600 font-mono"><span id="resLifecycle">--</span> <span class="text-[10px] font-medium text-slate-400">天/輪</span></p>
                         </div>
                     </div>
                 </div>
@@ -217,9 +227,10 @@
                         </h4>
                         <p class="text-[11px] text-slate-300 leading-relaxed">
                             反應後之草本廢液富含植物營養源。依據循環經濟原則，將其轉化為土壤改良劑或液態肥料，實現搖籃到大門的生態循環。
+                            <span class="text-emerald-300 block mt-1">*已扣除後處理製程(如濃縮、殺菌)之預估能耗。</span>
                         </p>
                         <div class="bg-white/5 p-4 rounded-xl border border-white/10 text-center">
-                            <span class="text-[9px] text-slate-400 block mb-1 uppercase tracking-widest">預估液態肥產出與經濟價值</span>
+                            <span class="text-[9px] text-slate-400 block mb-1 uppercase tracking-widest">淨轉化液態肥產出與價值</span>
                             <div class="flex justify-center items-end gap-3">
                                 <span id="resFert" class="text-xl font-bold font-mono text-white">-- L/y</span>
                                 <span class="text-slate-500 mb-1">≈</span>
@@ -303,26 +314,28 @@
 
             const A = parseFloat(getVal('inputA')) || 3.0; // 濃度
             const B = parseFloat(getVal('inputB')) || 10;  // 液氣比
-            const T = parseFloat(getVal('inputTemp')) || 115; // 溫度
+            const HLR = parseFloat(getVal('inputHLR')) || 1000; // 水力負荷
             
             const target = getVal('pollutantTarget');
             const freq = parseFloat(getVal('fogFreq')) || 1.7;
+            const mslType = getVal('mslType') || 'standard';
             const ind = getVal('industryType') || 'sme';
             const carbonPrice = parseFloat(getVal('carbonPrice')) || 300;
 
             setTxt('valA', A.toFixed(1));
             setTxt('valB', B);
-            setTxt('valTemp', T);
+            setTxt('valHLR', HLR);
 
-            // 1. 核心效能演算法 (RSM 模型)
+            // 1. 核心效能演算法 (RSM 模型 + 工程物理約束)
             // 標準化參數
             let x1 = (A - 3) / 2;
             let x2 = (B - 10) / 5;
-            let x3 = (T - 115) / 35;
+            let x3 = (HLR - 1000) / 2000; // 用 HLR 替代靜態溫度模型作為動態工程變數
             
-            // 迴歸預測方程
-            let eff = 88.5 + 4.2*x1 + 3.5*x2 - 1.8*x3 - 2.1*Math.pow(x1,2) - 1.5*Math.pow(x2,2) - 3.2*Math.pow(x3,2);
+            // 迴歸預測方程 (模擬動力學)
+            let eff = 88.5 + 4.2*x1 + 3.5*x2 - 2.8*x3 - 2.1*Math.pow(x1,2) - 1.5*Math.pow(x2,2);
             if (freq === 2.4) eff += 2.5; // 超音波微細化補償
+            if (mslType === 'carbon') eff += 3.0; // 活性碳表面吸附加成
 
             const finalEff = Math.min(Math.max(eff, 0), 99.5).toFixed(1);
             
@@ -333,33 +346,50 @@
             // 動態標籤
             const labels = { co2: 'CO₂ 去除率', so2: 'SOx 抵抗吸收率', voc: 'VOCs 降解率' };
             setTxt('resLabel', labels[target]);
-            setTxt('resBio', (parseFloat(finalEff) * 0.95).toFixed(1) + '%');
 
             // 2. 產業規模與經濟試算
             const emissionBase = { 'sme': 5000, 'large': 50000, 'heavy': 500000 };
             const grossCapture = emissionBase[ind] * (finalEff / 100);
             setTxt('resTons', parseInt(grossCapture).toLocaleString());
             
-            const savings = grossCapture * carbonPrice;
-            setTxt('resSavings', parseInt(savings).toLocaleString());
+            // 3. LCA 淨負碳效益演算 (論文重點 + 工程補償)
+            // 草本系統生命週期碳足跡參數：約 2.5 kg CO2e / kg處理劑
+            // 加上 MSL 系統的物理壓降造成的抽風機能耗增加
+            let pressureDrop = 15; // 基礎壓降 mmAq
+            if (mslType === 'carbon') pressureDrop += 25; // 活性碳孔隙小，壓降大
+            if (mslType === 'clay') pressureDrop -= 5;    // 發泡煉石透水性佳，壓降小
+            pressureDrop += (HLR / 1000) * 8;             // HLR 越高，流體阻力越大
+            
+            setTxt('resPressure', parseInt(pressureDrop));
 
-            // 3. LCA 淨負碳效益演算 (論文重點)
-            // 草本系統生命週期碳足跡參數：約 2.5 kg CO2e / kg處理劑 (取 2.1-3.3 均值)
-            // 假設每捕捉 1 噸 CO2 需消耗 0.1 噸藥劑 + 系統耗電碳排(約佔 5%)
             const agentCarbonFootprint = (grossCapture * 0.1) * 2.5; 
-            const energyCarbonFootprint = grossCapture * 0.05;
-            const netCarbon = grossCapture - agentCarbonFootprint - energyCarbonFootprint;
+            // 能耗碳排因壓降上升而增加 (非線性懲罰)
+            const energyCarbonFootprint = grossCapture * 0.05 * (1 + (pressureDrop / 100));
+            // 扣除副產物後處理(如濃縮)的估算碳排
+            const postTreatmentCarbon = grossCapture * 0.02;
+
+            const netCarbon = grossCapture - agentCarbonFootprint - energyCarbonFootprint - postTreatmentCarbon;
             
             setTxt('resNetCarbon', parseInt(netCarbon).toLocaleString());
 
-            // 4. 資源循環 (副產物)
-            const fertLiters = grossCapture * 2.5;
-            setTxt('resFert', parseInt(fertLiters).toLocaleString());
-            setTxt('resFertValue', parseInt(fertLiters * 15).toLocaleString()); // 假設市場價 15元/L
+            // 4. 藥劑生命週期預警 (Engineering Lifecycle)
+            // 藥劑消耗速率與處理量 (emissionBase) 及 濃度 (A) 相關
+            // 處理量越大，週期越短；濃度越高，耐受期相對較長。
+            let lifecycleDays = 30; // 基準 30 天
+            if (ind === 'large') lifecycleDays = 14;
+            if (ind === 'heavy') lifecycleDays = 3;
+            lifecycleDays = lifecycleDays * (A / 3.0) * (100 / finalEff); // 依效率與濃度微調
+            
+            setTxt('resLifecycle', Math.max(1, parseInt(lifecycleDays)));
 
-            // 5. AHP 雷達圖 (對齊 3.7 節 4大構面)
-            // 技術成熟度: 視效率與頻率穩定性
-            let techScore = 80 + (finalEff - 85) + (freq === 2.4 ? 5 : 0);
+            // 5. 資源循環 (副產物，已扣除 15% 轉化損耗)
+            const fertLiters = grossCapture * 2.5 * 0.85; 
+            setTxt('resFert', parseInt(fertLiters).toLocaleString());
+            setTxt('resFertValue', parseInt(fertLiters * 15).toLocaleString());
+
+            // 6. AHP 雷達圖 (對齊 3.7 節 4大構面)
+            // 技術成熟度: 視效率與壓降穩定性
+            let techScore = 80 + (finalEff - 85) - (pressureDrop > 40 ? 10 : 0) + (freq === 2.4 ? 5 : 0);
             // 經濟可行性: 視 ROI (淨碳排越高，經濟性越好)
             let ecoScore = 75 + (netCarbon / grossCapture) * 20; 
             // 環境永續性: 草本天然優勢，固定高分 + 副產物加值
@@ -381,7 +411,7 @@
         window.onload = () => {
             initCharts();
             updateUI();
-            ['inputA', 'inputB', 'inputTemp', 'pollutantTarget', 'fogFreq', 'industryType', 'carbonPrice'].forEach(id => {
+            ['inputA', 'inputB', 'inputHLR', 'pollutantTarget', 'fogFreq', 'mslType', 'industryType', 'carbonPrice'].forEach(id => {
                 document.getElementById(id)?.addEventListener('input', updateUI);
                 document.getElementById(id)?.addEventListener('change', updateUI);
             });
@@ -389,7 +419,7 @@
 
         function downloadReport() {
             const getTxt = id => document.getElementById(id)?.innerText || "--";
-            alert(`《草本科技與環境淨化》多準則評估摘要：\n------------------------\n實驗參數預測去除率：${getTxt('resEfficiency')}\nLCA 淨負碳效益：${getTxt('resNetCarbon')} 噸\n預估碳費節省：NT$ ${getTxt('resSavings')}\n資源循環產出：${getTxt('resFert')} 升副產物`);
+            alert(`《草本科技與環境淨化》工程評估摘要：\n------------------------\n實驗參數預測去除率：${getTxt('resEfficiency')}\n系統壓降預估：${getTxt('resPressure')} mmAq\n藥劑替換週期：約 ${getTxt('resLifecycle')} 天\nLCA 淨負碳效益：${getTxt('resNetCarbon')} 噸`);
         }
     </script>
 </body>
