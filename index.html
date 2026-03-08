@@ -3,416 +3,393 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HerbalPurify | 淨零科技決策支援系統</title>
+    <title>HerbalPurify Ultimate | 論文數位孿生與決策系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Firebase SDKs -->
+    
+    <!-- Firebase 整合與計數器模組 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase 配置與初始化
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'herbal-tech-v1';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'herbal-thesis-pro';
 
-        // 登入並啟動計數器
-        const initAnalytics = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Auth failed", error);
-            }
-        };
-
-        onAuthStateChanged(auth, async (user) => {
-            if (!user) return;
-
-            // 定義計數器文件路徑 (遵循規範：/artifacts/{appId}/public/data/{collectionName})
-            const statsRef = doc(db, 'artifacts', appId, 'public', 'data', 'statistics', 'visitorCounter');
-            
-            // 嘗試獲取現有數據，若不存在則初始化
-            const docSnap = await getDoc(statsRef);
-            if (!docSnap.exists()) {
-                await setDoc(statsRef, { count: 1 });
+        async function initSystem() {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
             } else {
-                // 增加計數
-                await updateDoc(statsRef, { count: increment(1) });
+                await signInAnonymously(auth);
             }
 
-            // 即時監聽訪客人數更新到 UI
-            onSnapshot(statsRef, (doc) => {
-                if (doc.exists()) {
-                    const countEl = document.getElementById('visitorCount');
-                    if (countEl) countEl.innerText = doc.data().count.toLocaleString();
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) return;
+                const statsRef = doc(db, 'artifacts', appId, 'public', 'data', 'statistics', 'visitorCounter');
+                
+                if (!sessionStorage.getItem('tracked')) {
+                    try {
+                        const snap = await getDoc(statsRef);
+                        if (!snap.exists()) { await setDoc(statsRef, { count: 1 }); }
+                        else { await updateDoc(statsRef, { count: increment(1) }); }
+                        sessionStorage.setItem('tracked', 'true');
+                    } catch (e) { console.error(e); }
                 }
-            }, (error) => console.error("Snapshot error", error));
-        });
 
-        initAnalytics();
+                onSnapshot(statsRef, (s) => {
+                    if (s.exists()) {
+                        const el = document.getElementById('visitorCount');
+                        if (el) el.innerText = s.data().count.toLocaleString();
+                    }
+                });
+            });
+        }
+        initSystem();
     </script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Inter:wght@400;600;700&display=swap');
-        
-        :root {
-            --brand-green: #15803d;
-            --soft-green: #f0fdf4;
-            --tech-blue: #0369a1;
-            --bg-slate: #f8fafc;
-        }
-
-        body { 
-            font-family: 'Noto Sans TC', 'Inter', sans-serif; 
-            background-color: var(--bg-slate); 
-            color: #1e293b;
-        }
-
-        .glass-card { 
-            background: rgba(255, 255, 255, 0.8); 
-            backdrop-filter: blur(8px); 
-            border: 1px solid rgba(255, 255, 255, 1);
-            border-radius: 1.25rem; 
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-            transition: all 0.3s ease;
-        }
-
-        .gradient-text {
-            background: linear-gradient(135deg, #15803d 0%, #0369a1 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .input-control {
-            border: 1px solid #e2e8f0;
-            background: white;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            color: #1e293b;
-        }
-
-        .dark-input-control {
-            background: #1e293b !important;
-            border: 1px solid #334155 !important;
-            color: #f8fafc !important;
-        }
-
-        .badge-visitor {
-            background: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-            padding: 4px 12px;
-            border-radius: 99px;
-            font-size: 11px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=JetBrains+Mono&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid white; border-radius: 1.5rem; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); transition: all 0.3s ease; }
+        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1); border-color: #f1f5f9; }
+        .gradient-text { background: linear-gradient(135deg, #059669 0%, #0284c7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        input[type=range] { accent-color: #059669; height: 6px; }
+        .metric-card { border: 1px solid #f1f5f9; padding: 1.25rem; border-radius: 1.25rem; background: #ffffff; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .dark-input { background: #1e293b !important; color: #f8fafc !important; border: 1px solid #334155 !important; }
+        .thesis-ref { font-size: 10px; padding: 2px 6px; background: #fef3c7; color: #047857; border-radius: 4px; margin-left: 6px; font-weight: bold; border: 1px solid #a7f3d0; }
     </style>
 </head>
-<body class="p-4 md:p-8 lg:p-12">
+<body class="p-4 md:p-8 lg:p-10">
     <div class="max-w-7xl mx-auto">
-        <!-- 導航標題 -->
-        <header class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-8">
-            <div>
-                <div class="flex items-center gap-4 mb-2">
-                    <h1 class="text-3xl font-bold gradient-text">草本科技與源頭淨化比對系統</h1>
-                    <div class="badge-visitor">
-                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                        累計訪客數：<span id="visitorCount" class="text-slate-800">載入中...</span>
+        <!-- 專業化表頭：直接對齊論文題目 -->
+        <header class="mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-200 pb-8">
+            <div class="space-y-2">
+                <div class="flex flex-wrap items-center gap-4">
+                    <h1 class="text-3xl font-black gradient-text tracking-tight">草本科技與環境淨化系統</h1>
+                    <div class="bg-white px-3 py-1 rounded-full shadow-sm border border-slate-200 text-[10px] font-bold text-slate-500">
+                        <span class="w-2 h-2 bg-green-500 rounded-full inline-block animate-pulse mr-1"></span>
+                        累計展示次數：<span id="visitorCount" class="text-slate-700">---</span>
                     </div>
                 </div>
-                <p class="text-slate-500 font-medium italic">Herbal Tech & ESG Synergy Decision Platform</p>
+                <p class="text-slate-500 font-medium">CO₂源頭淨化之創新系統設計與產業應用數位孿生</p>
             </div>
-            <div class="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-100">
+            <div class="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                 <div class="text-right">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">技術核心：1.7MHz 超音波霧化 × 草本仿生酶</p>
-                    <div class="flex items-center justify-end gap-2">
-                        <p class="text-sm font-bold text-slate-700">研究主持人：黃建欣 | 軟體設計 吳啓仲</p>
-                        <a href="mailto:0922693981ab11@gmail.com" title="點擊發送郵件聯絡軟體設計師" class="text-slate-400 hover:text-blue-600 transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                        </a>
-                    </div>
+                    <p class="text-[9px] font-black text-slate-300 uppercase tracking-widest">Master's Thesis System</p>
+                    <p class="text-sm font-bold text-slate-700">研究主持 黃建欣 ⨯ 軟體設計 吳啓仲</p>
                 </div>
-                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                </div>
+                <a href="mailto:0922693981ab11@gmail.com" title="聯絡軟體設計工程師" class="p-2.5 bg-slate-50 text-slate-400 hover:text-blue-500 rounded-xl transition-all border border-slate-100">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </a>
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- 左側面板 -->
+            <!-- 左側：論文實驗參數控制台 -->
             <div class="lg:col-span-4 space-y-6">
-                <!-- RSM 參數 -->
-                <div class="glass-card p-6 bg-white">
-                    <h3 class="text-lg font-bold mb-6 flex items-center gap-2 text-slate-800 border-b pb-2">
-                        <span class="w-2 h-2 bg-green-500 rounded-full"></span> 實作參數模擬 (RSM)
+                <!-- 藥劑與物理參數 (論文第三章) -->
+                <div class="glass-card p-7 space-y-8 border-t-4 border-emerald-600">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                        實驗參數與系統配置 <span class="thesis-ref">§ 3.4 RSM</span>
                     </h3>
-                    <div class="space-y-6 text-sm">
+                    
+                    <div class="space-y-6">
                         <div>
-                            <div class="flex justify-between font-bold mb-3">
-                                <span class="text-slate-600">草本藥劑濃度 (A)</span>
-                                <span class="text-green-700"><span id="valA">3.0</span> %</span>
-                            </div>
-                            <input type="range" id="inputA" min="1" max="5" step="0.1" value="3" class="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                            <div class="flex justify-between text-xs font-bold mb-3"><span>草本藥劑濃度 (%)</span><span class="text-emerald-600 font-mono"><span id="valA">3.0</span>%</span></div>
+                            <input type="range" id="inputA" min="1" max="10" step="0.1" value="3" class="w-full">
                         </div>
                         <div>
-                            <div class="flex justify-between font-bold mb-3">
-                                <span class="text-slate-600">液氣比 L/G (B)</span>
-                                <span class="text-green-700"><span id="valB">10</span> L/m³</span>
-                            </div>
-                            <input type="range" id="inputB" min="5" max="15" step="1" value="10" class="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                            <div class="flex justify-between text-xs font-bold mb-3"><span>液氣比 (L/G)</span><span class="text-emerald-600 font-mono"><span id="valB">10</span></span></div>
+                            <input type="range" id="inputB" min="5" max="20" step="1" value="10" class="w-full">
                         </div>
                         <div>
-                            <div class="flex justify-between font-bold mb-3">
-                                <span class="text-slate-600">煙道進氣溫度 (C)</span>
-                                <span class="text-green-700"><span id="valC">115</span> °C</span>
-                            </div>
-                            <input type="range" id="inputC" min="80" max="150" step="5" value="115" class="w-full h-1.5 bg-slate-200 rounded-lg cursor-pointer">
+                            <div class="flex justify-between text-xs font-bold mb-3"><span>煙道進氣溫度 (°C)</span><span class="text-emerald-600 font-mono"><span id="valTemp">115</span>°C</span></div>
+                            <input type="range" id="inputTemp" min="60" max="150" value="115" class="w-full">
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-100 space-y-4">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">目標淨化標的</label>
+                            <select id="pollutantTarget" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                                <option value="co2">CO₂ 源頭淨化捕集 (主研方向)</option>
+                                <option value="so2">工業 SOx 廢氣抵抗與吸附</option>
+                                <option value="voc">VOCs 揮發性有機物降解</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">超音波霧化頻率 <span class="thesis-ref">§ 2.3</span></label>
+                            <select id="fogFreq" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none">
+                                <option value="1.7">1.7 MHz (標準傳質效應)</option>
+                                <option value="2.4">2.4 MHz (奈米級微細霧化強化)</option>
+                            </select>
                         </div>
                     </div>
                 </div>
 
-                <!-- 競爭力比較 -->
+                <!-- 競品比較 (對齊論文 2.4 節) -->
                 <div class="glass-card p-6 bg-slate-50 border-l-4 border-slate-400">
-                    <h3 class="text-lg font-bold mb-5 flex items-center gap-2 text-slate-800">
-                        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                        技術競爭力比較
+                    <h3 class="text-sm font-bold mb-4 text-slate-800 flex items-center gap-2">
+                        技術競爭力 LCA 比較 <span class="thesis-ref">§ 2.4</span>
                     </h3>
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center p-3 bg-white rounded-xl shadow-sm">
-                            <span class="text-xs font-bold text-slate-500">本系統 (Herbal)</span>
-                            <span class="text-sm font-bold text-green-600">能耗比: 低 (電驅)</span>
+                    <div class="space-y-2">
+                        <div class="p-3 bg-white rounded-xl shadow-sm border border-emerald-100">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs font-black text-emerald-700">本系統 (草本生化)</span>
+                                <span class="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">最佳</span>
+                            </div>
+                            <p class="text-[10px] text-slate-500">單位碳足跡: 2.1-3.3 kg CO₂e / 低能耗</p>
                         </div>
-                        <div class="flex justify-between items-center p-3 bg-white/50 rounded-xl opacity-60">
-                            <span class="text-xs font-bold text-slate-500">化學法 (MEA)</span>
-                            <span class="text-xs font-bold text-red-600">能耗比: 極高</span>
+                        <div class="p-3 bg-white/60 rounded-xl border border-slate-200 opacity-70">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs font-bold text-slate-600">MEA 傳統化學法</span>
+                                <span class="text-[10px] font-bold text-red-500">高碳排</span>
+                            </div>
+                            <p class="text-[10px] text-slate-500">單位碳足跡: 5.8-7.4 kg CO₂e / 高熱能耗</p>
+                        </div>
+                        <div class="p-3 bg-white/60 rounded-xl border border-slate-200 opacity-70">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs font-bold text-slate-600">石墨烯吸附材料</span>
+                                <span class="text-[10px] font-bold text-orange-500">中碳排</span>
+                            </div>
+                            <p class="text-[10px] text-slate-500">單位碳足跡: 4.5-6.0 kg CO₂e / 回收難</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 右側面板 -->
-            <div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- 捕捉效率 HUD -->
-                <div class="glass-card p-8 md:col-span-2 bg-gradient-to-br from-white to-green-50 flex flex-col md:flex-row items-center gap-10">
-                    <div class="relative w-48 h-48">
+            <!-- 右側：論文成果看板區 -->
+            <div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 核心效能 HUD -->
+                <div class="glass-card p-8 md:col-span-2 bg-gradient-to-br from-white to-emerald-50/40 flex flex-col md:flex-row items-center gap-10">
+                    <div class="relative w-48 h-48 shrink-0">
                         <svg class="w-full h-full transform -rotate-90">
-                            <circle cx="96" cy="96" r="82" stroke="#e2e8f0" stroke-width="14" fill="none" />
-                            <circle id="progressCircle" cx="96" cy="96" r="82" stroke="var(--brand-green)" stroke-width="14" fill="none" stroke-dasharray="515" stroke-dashoffset="100" stroke-linecap="round" class="transition-all duration-700 ease-out" />
+                            <circle cx="96" cy="96" r="82" stroke="#f1f5f9" stroke-width="14" fill="none" />
+                            <circle id="progressCircle" cx="96" cy="96" r="82" stroke="#10b981" stroke-width="14" fill="none" stroke-dasharray="515" stroke-dashoffset="100" stroke-linecap="round" class="transition-all duration-1000" />
                         </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span id="resEfficiency" class="text-4xl font-bold text-slate-800">--%</span>
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">$CO_2$ 去除率</span>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                            <span id="resEfficiency" class="text-4xl font-black text-slate-800 tracking-tighter">--%</span>
+                            <span id="resLabel" class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">預測去除率</span>
                         </div>
                     </div>
-                    <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="bg-white/60 p-4 rounded-xl border border-white">
-                            <p class="text-[10px] font-bold text-slate-400 mb-1">年度碳捕捉量</p>
-                            <p class="text-2xl font-bold text-slate-800"><span id="resTons">0</span> <span class="text-xs font-medium">噸</span></p>
+                    
+                    <div class="w-full grid grid-cols-2 gap-4">
+                        <div class="metric-card shadow-sm border-slate-100">
+                            <p class="text-[10px] font-black text-slate-400 uppercase mb-2">毛捕捉量 (Gross Capture)</p>
+                            <p class="text-xl font-bold text-slate-800 font-mono"><span id="resTons">0</span> <span class="text-[10px] font-medium text-slate-400">噸/年</span></p>
                         </div>
-                        <div class="bg-white/60 p-4 rounded-xl border border-white">
-                            <p class="text-[10px] font-bold text-slate-400 mb-1">年度碳費減省</p>
-                            <p id="resSavings" class="text-2xl font-bold text-green-600">NT$ 0</p>
+                        <div class="metric-card shadow-sm border-emerald-200 bg-emerald-50/30">
+                            <p class="text-[10px] font-black text-emerald-600 uppercase mb-2 flex items-center justify-between">
+                                LCA 淨負碳效益 <span class="thesis-ref scale-75 origin-right">圖15</span>
+                            </p>
+                            <p class="text-xl font-bold text-emerald-700 font-mono"><span id="resNetCarbon">0</span> <span class="text-[10px] font-medium text-emerald-600">噸 CO₂e</span></p>
                         </div>
-                        <div class="bg-white/60 p-4 rounded-xl border border-white border-l-4 border-emerald-500 shadow-sm">
-                            <p class="text-[10px] font-bold text-slate-400 mb-1">EEWH 得分預估</p>
-                            <p class="text-2xl font-bold text-emerald-600"><span id="resEEWH">--</span></p>
+                        <div class="metric-card shadow-sm border-slate-100">
+                            <p class="text-[10px] font-black text-slate-400 uppercase mb-2">碳費節省 (Carbon Value)</p>
+                            <p class="text-xl font-bold text-blue-600 font-mono">NT$ <span id="resSavings">0</span></p>
                         </div>
-                        <div class="bg-white/60 p-4 rounded-xl border border-white">
-                            <p class="text-[10px] font-bold text-slate-400 mb-1">預估回收年限</p>
-                            <p class="text-2xl font-bold text-orange-600"><span id="resROI">--</span> <span class="text-xs font-medium">年</span></p>
+                        <div class="metric-card shadow-sm border-slate-100">
+                            <p class="text-[10px] font-black text-slate-400 uppercase mb-2">環境微生物減活率</p>
+                            <p id="resBio" class="text-xl font-bold text-orange-500 font-mono">--%</p>
                         </div>
-                    </div>
-                </div>
-
-                <!-- 趨勢圖表 -->
-                <div class="glass-card p-6 bg-white">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">捕捉效能穩定性</h3>
-                    <div class="h-48">
-                        <canvas id="performanceChart"></canvas>
                     </div>
                 </div>
 
-                <!-- 雷達圖 -->
-                <div class="glass-card p-6 bg-white">
-                    <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">ESG 綜合績效</h3>
-                    <div class="h-48">
-                        <canvas id="radarChart"></canvas>
-                    </div>
+                <!-- 論文 3.7 節 AHP 雷達圖 -->
+                <div class="glass-card p-6 h-72">
+                    <h3 class="text-xs font-black text-slate-600 uppercase tracking-widest mb-4 flex justify-between">
+                        多準則可行性評估 <span class="thesis-ref">§ 3.7 表12</span>
+                    </h3>
+                    <div class="h-48"><canvas id="radarChart"></canvas></div>
                 </div>
 
-                <!-- 資源化價值 -->
-                <div class="glass-card p-6 md:col-span-2 bg-emerald-900 text-white flex flex-col md:flex-row gap-8 items-center">
-                    <div class="flex-1">
-                        <h4 class="text-emerald-400 font-bold text-xs uppercase mb-2">循環經濟價值</h4>
-                        <p class="text-sm text-emerald-100">工業排放 $CO_2$ 轉化為 NPK 肥料，實踐靜脈產業核心理念。</p>
-                    </div>
-                    <div class="flex gap-4">
-                        <div class="bg-white/10 p-4 rounded-2xl text-center border border-white/20">
-                            <span class="text-[10px] text-emerald-300 block">年度肥料預估</span>
-                            <span id="resFert" class="text-xl font-bold">-- L</span>
-                        </div>
-                        <div class="bg-white/10 p-4 rounded-2xl text-center border border-white/20">
-                            <span class="text-[10px] text-emerald-300 block">肥料價值</span>
-                            <span id="resFertValue" class="text-xl font-bold">NT$ --</span>
+                <!-- 資源循環價值化 (副產物加值) -->
+                <div class="glass-card p-6 bg-slate-900 text-white overflow-hidden relative h-72 flex flex-col justify-center">
+                    <div class="absolute right-0 top-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl -mr-20 -mt-20"></div>
+                    <div class="relative z-10 space-y-4">
+                        <h4 class="text-emerald-400 font-black text-xs uppercase tracking-widest flex justify-between items-center">
+                            副產物加值潛力 <span class="thesis-ref border-emerald-700 text-emerald-300 bg-emerald-900">指標 6</span>
+                        </h4>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">
+                            反應後之草本廢液富含植物營養源。依據循環經濟原則，將其轉化為土壤改良劑或液態肥料，實現搖籃到大門的生態循環。
+                        </p>
+                        <div class="bg-white/5 p-4 rounded-xl border border-white/10 text-center">
+                            <span class="text-[9px] text-slate-400 block mb-1 uppercase tracking-widest">預估液態肥產出與經濟價值</span>
+                            <div class="flex justify-center items-end gap-3">
+                                <span id="resFert" class="text-xl font-bold font-mono text-white">-- L/y</span>
+                                <span class="text-slate-500 mb-1">≈</span>
+                                <span id="resFertValue" class="text-lg font-bold font-mono text-emerald-400">NT$ --</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 底部控制 -->
-        <footer class="mt-12 glass-card p-8 bg-slate-900 text-white">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-end">
+        <footer class="mt-8 glass-card p-8 bg-white border border-slate-200">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 items-end">
                 <div class="space-y-3">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase">產業應用場景</label>
-                    <select id="industryType" class="w-full dark-input-control p-3 rounded-xl outline-none text-sm">
-                        <option value="sme">中小型製造業</option>
-                        <option value="large">大型上市櫃公司</option>
-                        <option value="green_building">綠建築案場</option>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">產業導入規模 (Capacity)</label>
+                    <select id="industryType" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="sme">中小型製造業 (年排 5,000 噸)</option>
+                        <option value="large">大型上市櫃 (年排 50,000 噸)</option>
+                        <option value="heavy">國營重工業 (年排 500,000 噸)</option>
                     </select>
                 </div>
                 <div class="space-y-3">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase">霧化頻率 (MHz)</label>
-                    <select id="fogFreq" class="w-full dark-input-control p-3 rounded-xl text-sm">
-                        <option value="1.7">1.7 MHz (標準)</option>
-                        <option value="2.4">2.4 MHz (極細)</option>
-                    </select>
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">碳定價模擬 (Carbon Fee)</label>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-500">NT$</span>
+                        <input type="number" id="carbonPrice" value="300" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
                 </div>
                 <div class="space-y-3">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase">碳費預估 (NT$/噸)</label>
-                    <input type="number" id="carbonPrice" value="300" class="w-full dark-input-control p-3 rounded-xl text-sm">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">系統評估基準</label>
+                    <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-600 text-center">
+                        <span class="text-emerald-600">HerbalTech v2.0</span> 數學模型
+                    </div>
                 </div>
-            </div>
-            <div class="mt-6 text-right">
-                <button onclick="downloadReport()" class="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-10 rounded-xl transition shadow-xl active:scale-95">
-                    匯出比對報告
+                <button onclick="downloadReport()" class="bg-slate-900 text-white font-black text-[11px] py-4 px-6 rounded-xl uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg active:scale-95 text-center">
+                    匯出多準則評估報告
                 </button>
             </div>
         </footer>
     </div>
 
     <script>
-        let perfChart, radarChart;
+        let radarChart;
 
         function initCharts() {
-            const perfCanvas = document.getElementById('performanceChart');
-            const radarCanvas = document.getElementById('radarChart');
-
-            if (perfCanvas) {
-                perfChart = new Chart(perfCanvas.getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: Array.from({length: 10}, (_, i) => `${i*5}s`),
-                        datasets: [{
-                            label: '去除穩定性',
-                            data: new Array(10).fill(0),
-                            borderColor: '#16a34a',
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: 0
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 50, max: 100 } } }
-                });
-            }
-
-            if (radarCanvas) {
-                radarChart = new Chart(radarCanvas.getContext('2d'), {
-                    type: 'radar',
-                    data: {
-                        labels: ['去除率', '能耗表現', '資源回收', '法規適應', '回收年限'],
-                        datasets: [{
-                            data: [85, 95, 90, 80, 75],
-                            backgroundColor: 'rgba(22, 163, 74, 0.1)',
-                            borderColor: '#16a34a'
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { r: { suggestedMin: 0, suggestedMax: 100, ticks: { display: false } } } }
-                });
-            }
+            const ctxR = document.getElementById('radarChart').getContext('2d');
+            // 完全對齊論文 3.7 節表 12 的四大構面
+            radarChart = new Chart(ctxR, {
+                type: 'radar',
+                data: {
+                    labels: ['技術成熟度', '經濟可行性', '環境永續性', '政策與社會面'],
+                    datasets: [{
+                        label: '草本系統評估得分',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#10b981',
+                        pointRadius: 3
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } }, 
+                    scales: { 
+                        r: { 
+                            suggestedMin: 0, 
+                            suggestedMax: 100, 
+                            ticks: { display: false },
+                            pointLabels: { font: { size: 10, family: "'Noto Sans TC', sans-serif", weight: 'bold' }, color: '#475569' }
+                        } 
+                    } 
+                }
+            });
         }
 
         function updateUI() {
             const getVal = id => document.getElementById(id)?.value;
-            const setTxt = (id, val) => {
-                const el = document.getElementById(id);
-                if (el) el.innerText = val;
-            };
+            const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
 
-            const A = parseFloat(getVal('inputA')) || 3.0;
-            const B = parseFloat(getVal('inputB')) || 10;
-            const C = parseFloat(getVal('inputC')) || 115;
-            const carbonPrice = parseFloat(getVal('carbonPrice')) || 300;
-            const ind = getVal('industryType') || 'sme';
+            const A = parseFloat(getVal('inputA')) || 3.0; // 濃度
+            const B = parseFloat(getVal('inputB')) || 10;  // 液氣比
+            const T = parseFloat(getVal('inputTemp')) || 115; // 溫度
+            
+            const target = getVal('pollutantTarget');
             const freq = parseFloat(getVal('fogFreq')) || 1.7;
+            const ind = getVal('industryType') || 'sme';
+            const carbonPrice = parseFloat(getVal('carbonPrice')) || 300;
 
+            setTxt('valA', A.toFixed(1));
+            setTxt('valB', B);
+            setTxt('valTemp', T);
+
+            // 1. 核心效能演算法 (RSM 模型)
+            // 標準化參數
             let x1 = (A - 3) / 2;
             let x2 = (B - 10) / 5;
-            let x3 = (C - 115) / 35;
+            let x3 = (T - 115) / 35;
             
+            // 迴歸預測方程
             let eff = 88.5 + 4.2*x1 + 3.5*x2 - 1.8*x3 - 2.1*Math.pow(x1,2) - 1.5*Math.pow(x2,2) - 3.2*Math.pow(x3,2);
-            if(freq === 2.4) eff += 2.5; 
+            if (freq === 2.4) eff += 2.5; // 超音波微細化補償
 
-            const finalEff = Math.min(Math.max(eff, 0), 99.5).toFixed(2);
+            const finalEff = Math.min(Math.max(eff, 0), 99.5).toFixed(1);
             
-            setTxt('valA', A); setTxt('valB', B); setTxt('valC', C);
             setTxt('resEfficiency', finalEff + '%');
-            
             const circle = document.getElementById('progressCircle');
             if (circle) circle.style.strokeDashoffset = 515 - (515 * finalEff / 100);
 
-            let baseVol = (ind === 'green_building' ? 500 : (ind === 'large' ? 5000 : 1200));
-            const tons = (baseVol * finalEff / 100).toFixed(0);
-            setTxt('resTons', tons);
-            
-            const savings = tons * carbonPrice;
-            setTxt('resSavings', 'NT$ ' + parseInt(savings).toLocaleString());
-            
-            const roi = (3500000 / (savings + (tons * 150))).toFixed(1); 
-            setTxt('resROI', roi);
-            setTxt('resEEWH', (finalEff / 10 + 2).toFixed(1));
+            // 動態標籤
+            const labels = { co2: 'CO₂ 去除率', so2: 'SOx 抵抗吸收率', voc: 'VOCs 降解率' };
+            setTxt('resLabel', labels[target]);
+            setTxt('resBio', (parseFloat(finalEff) * 0.95).toFixed(1) + '%');
 
-            const fertLiters = (tons * 2.5).toFixed(0);
-            setTxt('resFert', parseInt(fertLiters).toLocaleString() + ' L');
-            setTxt('resFertValue', 'NT$ ' + parseInt(fertLiters * 15).toLocaleString());
+            // 2. 產業規模與經濟試算
+            const emissionBase = { 'sme': 5000, 'large': 50000, 'heavy': 500000 };
+            const grossCapture = emissionBase[ind] * (finalEff / 100);
+            setTxt('resTons', parseInt(grossCapture).toLocaleString());
+            
+            const savings = grossCapture * carbonPrice;
+            setTxt('resSavings', parseInt(savings).toLocaleString());
 
-            if(perfChart) {
-                perfChart.data.datasets[0].data.push(finalEff);
-                perfChart.data.datasets[0].data.shift();
-                perfChart.update('none');
-            }
-            if(radarChart) {
-                radarChart.data.datasets[0].data = [finalEff, 95, 90, 85, Math.max(0, 100 - roi*5)];
+            // 3. LCA 淨負碳效益演算 (論文重點)
+            // 草本系統生命週期碳足跡參數：約 2.5 kg CO2e / kg處理劑 (取 2.1-3.3 均值)
+            // 假設每捕捉 1 噸 CO2 需消耗 0.1 噸藥劑 + 系統耗電碳排(約佔 5%)
+            const agentCarbonFootprint = (grossCapture * 0.1) * 2.5; 
+            const energyCarbonFootprint = grossCapture * 0.05;
+            const netCarbon = grossCapture - agentCarbonFootprint - energyCarbonFootprint;
+            
+            setTxt('resNetCarbon', parseInt(netCarbon).toLocaleString());
+
+            // 4. 資源循環 (副產物)
+            const fertLiters = grossCapture * 2.5;
+            setTxt('resFert', parseInt(fertLiters).toLocaleString());
+            setTxt('resFertValue', parseInt(fertLiters * 15).toLocaleString()); // 假設市場價 15元/L
+
+            // 5. AHP 雷達圖 (對齊 3.7 節 4大構面)
+            // 技術成熟度: 視效率與頻率穩定性
+            let techScore = 80 + (finalEff - 85) + (freq === 2.4 ? 5 : 0);
+            // 經濟可行性: 視 ROI (淨碳排越高，經濟性越好)
+            let ecoScore = 75 + (netCarbon / grossCapture) * 20; 
+            // 環境永續性: 草本天然優勢，固定高分 + 副產物加值
+            let envScore = 90 + (A > 3 ? 5 : 0); 
+            // 政策社會面: ESG 形象，大企業得分更高
+            let polScore = ind === 'large' ? 95 : (ind === 'heavy' ? 85 : 80);
+
+            if (radarChart) {
+                radarChart.data.datasets[0].data = [
+                    Math.min(techScore, 100), 
+                    Math.min(ecoScore, 100), 
+                    Math.min(envScore, 100), 
+                    Math.min(polScore, 100)
+                ];
                 radarChart.update();
             }
         }
 
-        window.onload = function() {
+        window.onload = () => {
             initCharts();
             updateUI();
-            ['inputA', 'inputB', 'inputC', 'carbonPrice', 'industryType', 'fogFreq'].forEach(id => {
+            ['inputA', 'inputB', 'inputTemp', 'pollutantTarget', 'fogFreq', 'industryType', 'carbonPrice'].forEach(id => {
                 document.getElementById(id)?.addEventListener('input', updateUI);
+                document.getElementById(id)?.addEventListener('change', updateUI);
             });
         };
 
         function downloadReport() {
             const getTxt = id => document.getElementById(id)?.innerText || "--";
-            const report = `比對摘要\n================================\n捕捉率 ${getTxt('resEfficiency')} / 年度減碳量 ${getTxt('resTons')} 噸\n聯絡軟體設計師：0922693981ab11@gmail.com`;
-            const blob = new Blob([report], { type: 'text/plain' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'Herbal_Comparison_Report.txt';
-            a.click();
+            alert(`《草本科技與環境淨化》多準則評估摘要：\n------------------------\n實驗參數預測去除率：${getTxt('resEfficiency')}\nLCA 淨負碳效益：${getTxt('resNetCarbon')} 噸\n預估碳費節省：NT$ ${getTxt('resSavings')}\n資源循環產出：${getTxt('resFert')} 升副產物`);
         }
     </script>
 </body>
